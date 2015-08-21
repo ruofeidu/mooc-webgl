@@ -560,8 +560,11 @@ function normalize( u, excludeLastComponent )
     var len = length( u );
 
     if ( !isFinite(len) ) {
-        throw "normalize: vector " + u + " has zero length";
-    }
+        console.log( "normalize: vector " + u + " has zero length" );
+        for ( var i = 0; i < u.length; ++i ) {
+			u[i] = 1e-6;
+		}
+	}
     
     for ( var i = 0; i < u.length; ++i ) {
         u[i] /= len;
