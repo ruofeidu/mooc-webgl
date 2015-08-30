@@ -24,10 +24,13 @@ function reload() {
 	gl.useProgram( program );
 	lightings = []; 
 	lightings.push(new Lighting()); 
+	lightings.push(new Lighting()); 
+	lightings[1].position = vec4( -1.0, -1.0, 1.0, 0.0 );
 	
 	models = []; 
 	models.push(new Cube()); 
 	models[0].translation = [-1.0, 1.0, 0.0];
+	models[0].rotation = [0.122, 0.296, 0.576];
 	models.push(new Sphere()); 
 	models[1].scale = [0.5, 0.5, 0.5];
 	models.push(new Cone()); 
@@ -47,16 +50,14 @@ function reload() {
 function render()
 {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	for (var i = 0; i < lightings.length; ++i) {
+		var currentLight = lightings[i]; 
+		currentLight.update(); 
+	}
+	
 	for (var i = 0; i < models.length; ++i) {		
 		var currentObject = models[i];
 		currentObject.render();
-		
-		//gl.bindBuffer(gl.ARRAY_BUFFER,currentObject.vbuffer);
-		//gl.vertexAttribPointer(program.vPosition, 4, gl.FLOAT, false, 0, 0);
-		// gl.bindBuffer(gl.ARRAY_BUFFER,currentObject.cbuffer)
-		// gl.vertexAttribPointer( program.vColor, 4, gl.FLOAT, false, 0, 0 );
-		
-		//gl.drawArrays(gl.TRIANGLES, 0, currentObject.numVertices);
 	}
 	requestAnimFrame(render);
 }
@@ -145,6 +146,39 @@ $( document ).ready(function() {
       }
 	});
 	
+	$( "#lightposx" ).slider({
+      range: false,
+      min: -20,
+      max: 20,
+	  value: 0,
+	  slide: function( event, ui ) {
+        $( "#lightposx_value" ).html( ui.value / 10 );
+		lightings[currentLightID].position[0] = ui.value / 10;
+      }
+	});
+	
+	$( "#lightposy" ).slider({
+      range: false,
+      min: -20,
+      max: 20,
+	  value: 0,
+	  slide: function( event, ui ) {
+        $( "#lightposy_value" ).html( ui.value / 10 );
+		lightings[currentLightID].position[1] = ui.value / 10;
+      }
+	});
+	
+	$( "#lightposz" ).slider({
+      range: false,
+      min: -40,
+      max: 40,
+	  value: 0,
+	  slide: function( event, ui ) {
+        $( "#lightposz_value" ).html( ui.value / 10 );
+		lightings[currentLightID].position[2] = ui.value / 10;
+      }
+	});
+	
 	$('#clear').click(function(){
 		paths = []; 
 		lastLine = []; 
@@ -161,11 +195,12 @@ $( document ).ready(function() {
 		reload(); 
 	});
 	
-    $( "#selectable" ).selectable({
+	$(".lightui").hide(); 
+	
+    $( "#modellist" ).selectable({
       stop: function() {
-        var result = $( "#select-result" ).empty();
         $( ".ui-selected", this ).each(function() {
-          var index = $( "#selectable li" ).index( this );
+          var index = $( "#modellist li" ).index( this );
           currentModelID = index;
 		  var v = 0; 
 		  v = models[currentModelID].scale[0] * 5;
@@ -197,38 +232,99 @@ $( document ).ready(function() {
 		  $( "#translationz" ).slider( "value", v);
 		  $( "#translationz_value" ).html( v );
         });
+		$(".modelui").show(); 
+		$(".lightui").hide(); 
+		$("#lightlist li").removeClass("ui-selected"); 
       }
     });
+	
+    $( "#lightlist" ).selectable({
+      stop: function() {
+        $( ".ui-selected", this ).each(function() {
+          var index = $( "#lightlist li" ).index( this );
+          currentLightID = index;
+		  var v = 0; 
+		  
+		  v = lightings[currentLightID].position[0] * 10;
+		  $( "#lightposx" ).slider( "value", v);
+		  $( "#lightposx_value" ).html( v );
+		  
+		  v = lightings[currentLightID].position[1] * 10;
+		  $( "#lightposy" ).slider( "value", v);
+		  $( "#lightposy_value" ).html( v );
+		  
+		  v = lightings[currentLightID].position[2] * 10;
+		  $( "#lightposz" ).slider( "value", v);
+		  $( "#lightposz_value" ).html( v );
+		  
+		  
+		  v = lightings[currentLightID].isOn; 
+		  if (v) {
+			  $( "input[name=lighton]" ).val(["0"]); 
+		  } else {
+			  $( "input[name=lighton]" ).val(["1"]); 
+		  }
+		  	
+		   v = lightings[currentLightID].isSwinging; 
+		  if (v) {
+			  $( "input[name=lightmoving]" ).val(["0"]); 
+		  } else {
+			  $( "input[name=lightmoving]" ).val(["1"]); 
+		  }
+        });
+		$(".modelui").hide(); 
+		$(".lightui").show(); 
+		$("#modellist li").removeClass("ui-selected"); 
+      }
+    });
+	
+	
 		
 	$("input[name=shape]").click(function() {
-		console.log('test'); 
 		var x = parseInt( $("input[name=shape]:checked").val() ); 
 		switch (x) {
 			case 0: models.push(new Cube()); ++cubeCount;  
-			var h =  $( "#selectable" ).html(); 
+			var h =  $( "#modellist" ).html(); 
 			var s = '<li class="ui-widget-content">Cube ' + cubeCount + '</li>';
-			$( "#selectable" ).html(h+s);  
+			$( "#modellist" ).html(h+s);  
 			break; 
 			case 1: models.push(new Sphere());  ++sphereCount;  
 			
-			var h =  $( "#selectable" ).html(); 
+			var h =  $( "#modellist" ).html(); 
 			var s = '<li class="ui-widget-content">Sphere ' + sphereCount + '</li>';
-			$( "#selectable" ).html(h+s); 
+			$( "#modellist" ).html(h+s); 
 			break;
 			case 2: models.push(new Cone()); ++coneCount;  
 			
-			var h =  $( "#selectable" ).html(); 
+			var h =  $( "#modellist" ).html(); 
 			var s = '<li class="ui-widget-content">Cone ' + coneCount + '</li>';
-			$( "#selectable" ).html(h+s); 
+			$( "#modellist" ).html(h+s); 
 			break; 
 		}; 
 	}); 
+	
+	$("input[name=lighton]").click(function() {
+		var x = parseInt( $("input[name=lighton]:checked").val() ); 
+		switch (x) {
+			case 0: lightings[currentLightID].turnOn();   break; 
+			case 1:  lightings[currentLightID].turnOff(); break;
+		}; 
+	}); 
+	
+	$("input[name=lightmoving]").click(function() {
+		var x = parseInt( $("input[name=lightmoving]:checked").val() ); 
+		switch (x) {
+			case 0: lightings[currentLightID].isSwinging = true;   break; 
+			case 1:  lightings[currentLightID].isSwinging = false; break;
+		}; 
+	}); 
+	
 	
 	$('#clear').click(function(){
 		models = []; 
 		cubeCount = 0; 
 		sphereCount = 0; 
 		coneCount = 0; 
-		$( "#selectable" ).html(''); 
+		$( "#modellist" ).html(''); 
 	});
 });

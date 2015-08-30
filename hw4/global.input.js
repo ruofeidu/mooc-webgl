@@ -19,7 +19,7 @@ var cubeCount = 2, sphereCount = 2, coneCount = 2;
 var isMouseDown = false, mousePos = {x:0, y:0, z:0, w:0};
 var program;
 
-var models = [], lightings = [], currentModelID = 0; 
+var models = [], lightings = [], currentModelID = 0, currentLightID = -1; 
 
 
 var para = {
@@ -45,7 +45,7 @@ function extendRelation(Child, Parent) {
 
 
 function Camera() {
-	this.theta = 0.0; 
+	this.theta = 0.5; 
 	this.phi = 0.0; 
 	this.radius = 6.0; 
 	this.at = vec3(0.0, 0.0, 0.0); 
@@ -61,6 +61,7 @@ function Camera() {
 	
 	this.modelViewMatrix = lookAt(this.eye, this.at, this.up);
 	this.projectionMatrix = ortho(this.left, this.right, this.bottom, this.top, this.near, this.far);
+	//this.projectionMatrix = perspective(45.0, 1.0 this.near, this.far); 
 	//this.projectionMatrix = ortho(-1, 1, -1, 1, -100, 100);
 };
 

@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>Assignment 3: Geometric CAD | Ruofei Du</title>
+<title>Assignment 4: Adding Lighting | Ruofei Du</title>
 <meta charset="UTF-8">
 <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,7 +12,7 @@
 <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
 <meta name="description" lang="en" content="Ruofei Du is a 3rd-year CS Ph.D. student advised by UMIACS Director Prof. Amitabh Varshney. His research mainly focus on virtual and augmented reality. His research interests include computer graphics, human-computer interaction and computer vision." />
 <meta name="author" content="Ruofei Du">
-<meta property="og:title" content="Assignment 2 Painting with the Mouse by Ruofei Du">
+<meta property="og:title" content="Assignment 4 Adding Lighting by Ruofei Du">
 <meta property="og:image" content="http://duruofei.com/Public/img/avatar.jpg">
 <meta property="og:description" content="Ruofei Du is a 3rd-year CS Ph.D. student advised by UMIACS Director Prof. Amitabh Varshney. His research mainly focus on virtual and augmented reality. His research interests include computer graphics, human-computer interaction and computer vision.">
 <link rel="shortcut icon" type="image/x-icon" href="http://duruofei.com/Public/icon/favicon.ico" />
@@ -21,51 +21,6 @@
 <link rel="apple-touch-icon" sizes="72x72" href="http://duruofei.com/Public/icon/72.png" />
 <link rel="apple-touch-icon" sizes="114x114" href="http://duruofei.com/Public/icon/114.png" />
 <link rel="apple-touch-icon" sizes="144x144" href="http://duruofei.com/Public/icon/144.png" />
-<style>
-#selectedcolor {
-	border:1px solid #e3e3e3;
-	width:65%;
-	height:199px;
-	margin:auto;
-}
-#divpreview {
-	border:1px solid #e3e3e3;
-	width:80px;
-	height:20px;
-	margin:auto;
-	visibility:hidden;
-}
-#colorhexDIV, #colorrgbDIV, #colornamDIV {
-	font-family:Consolas, 'Courier New', Courier, monospace;
-	text-align:center;
-	margin-top:6px;
-	height:24px;
-	font-size:18px;
-}
-table.colorshade {
-    width:100%;
-    margin:auto;
-    max-width:400px;
-}
-td.colorshade {
-	border-left:1px solid #e3e3e3;	
-}
-td.colorshadetxt {
-	padding-left:6px;
-	width:70px;
-	text-align:right;
-	font-family:Consolas, courier new;
-	font-size:110%;
-	border-left:1px solid #e3e3e3;	
-}
-#wronginputDIV {
-    text-align:left;
-    position:absolute;
-    margin:4px 10px;
-    color:#a94442;
-    display:none;
-}
-</style>
 
 <script id="vertex-shader" type="x-shader/x-vertex">
 attribute vec4 vPosition;
@@ -76,16 +31,23 @@ uniform vec4 ambientProduct, diffuseProduct, specularProduct;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform vec4 lightPosition;
+uniform vec4 lightPosition2;
+uniform int lightSwitches;
 uniform float shininess;
 void main()
 {
+	float a = 0.0, b = 0.0, c = 0.3;  // for distance attenuation
     vec3 pos = -(modelViewMatrix * vPosition).xyz;
     vec3 light = lightPosition.xyz;
+    vec3 light2 = lightPosition2.xyz;
     vec3 L = normalize( light - pos );
-
+    float dist1 = length( light.xyz - pos.xyz );
+    vec3 L2 = normalize( light2 - pos );
+    float dist2 = length( light2.xyz - pos.xyz );
 	
     vec3 E = normalize( -pos );
     vec3 H = normalize( L + E );
+    vec3 H2 = normalize( L2 + E );
     
     vec4 NN = vec4(vNormal,0);
 
@@ -97,18 +59,29 @@ void main()
     vec4 ambient = ambientProduct;
 
     float Kd = max( dot(L, N), 0.0 );
-    vec4  diffuse = Kd*diffuseProduct;
+    float Kd2 = max( dot(L2, N), 0.0 );
+    vec4  diffuse = Kd * diffuseProduct * ( 1.0 / (a + b*dist1 + c*dist1*dist1) ); // last term for distance attenuation
+    vec4  diffuse2 = Kd2 * diffuseProduct * ( 1.0/ (a + b*dist2 + c*dist2*dist2) );
 
+	
     float Ks = pow( max(dot(N, H), 0.0), shininess );
+    float Ks2 = pow( max(dot(N, H2), 0.0), shininess );
     vec4  specular = Ks * specularProduct;
+    vec4  specular2 = Ks2 * specularProduct;
     
-    if( dot(L, N) < 0.0 ) {
-	specular = vec4(0.0, 0.0, 0.0, 1.0);
+    if	( dot(L, N) < 0.0 ) {
+		specular = vec4(0.0, 0.0, 0.0, 1.0);
     } 
+	
+	
 
     gl_Position = projectionMatrix * modelViewMatrix * vPosition;
-    fColor = ambient + diffuse + specular;
-    
+    fColor = ambient + (diffuse + specular) + (diffuse2 + specular2);
+    if (lightSwitches == 0) fColor = ambient; else
+    if (lightSwitches == 1) fColor = ambient + (diffuse + specular); else
+    if (lightSwitches == 2) fColor = ambient + (diffuse2 + specular2);
+	
+	
     fColor.a = 1.0;
 }
 </script>
@@ -154,179 +127,6 @@ function clickColor(hex, seltop, selleft, html5) {
 }
 </script>
 
-<script id="vertex-shader2" type="x-shader/x-vertex">
-attribute vec4 vPosition;
-attribute vec3 vNormal;
-varying vec4 fColor;
-
-uniform vec4 ambientProduct, diffuseProduct, specularProduct;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-uniform vec4 lightPosition;
-uniform float shininess;
-void main()
-{
-    vec3 pos = -(modelViewMatrix * vPosition).xyz;
-    vec3 light = lightPosition.xyz;
-    vec3 L = normalize( light - pos );
-
-	
-    vec3 E = normalize( -pos );
-    vec3 H = normalize( L + E );
-    
-    vec4 NN = vec4(vNormal,0);
-
-    // Transform vertex normal into eye coordinates
-       
-    vec3 N = normalize( (modelViewMatrix*NN).xyz);
-
-    // Compute terms in the illumination equation
-    vec4 ambient = ambientProduct;
-
-    float Kd = max( dot(L, N), 0.0 );
-    vec4  diffuse = Kd*diffuseProduct;
-
-    float Ks = pow( max(dot(N, H), 0.0), shininess );
-    vec4  specular = Ks * specularProduct;
-    
-    if( dot(L, N) < 0.0 ) {
-	specular = vec4(0.0, 0.0, 0.0, 1.0);
-    } 
-
-    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
-    fColor = ambient + diffuse + specular;
-    
-    fColor.a = 1.0;
-}
-</script>
-
-<script id="fragment-shader2" type="x-shader/x-fragment">
-precision mediump float;
-
-varying vec4 fColor;
-
-void main()
-{
-    gl_FragColor = fColor;
-	//gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); 
-}
-</script>
-
-<script>
-<!--
-var colorhex = "FF0000";
-function mouseOverColor(hex) {
-    document.getElementById("divpreview").style.visibility = "visible";
-    //  document.getElementById("divpreview").style.backgroundColor = hex;
-    document.body.style.cursor = "pointer";
-}
-
-function mouseOutMap() {
-}
-
-function clickColor(hex, seltop, selleft, html5) {
-    document.getElementById("divpreview").style.visibility = "visible";
-    document.getElementById("divpreview").style.backgroundColor = hex;
-    document.body.style.cursor = "pointer"; 
-
-  if ((seltop+199)>-1 && selleft>-1) {
-        document.getElementById("selectedhexagon").style.top=(seltop - 10) + "px";
-        document.getElementById("selectedhexagon").style.left=selleft + "px";
-        document.getElementById("selectedhexagon").style.visibility="visible";
-  } else {
-        document.getElementById("divpreview").style.backgroundColor = "#" + colorhex;
-        document.getElementById("selectedhexagon").style.visibility = "hidden";
-  }
-
-}
-</script>
-
-<script id="vertex-shader3" type="x-shader/x-vertex">
-attribute vec4 vPosition;
-attribute vec3 vNormal;
-varying vec4 fColor;
-
-uniform vec4 ambientProduct, diffuseProduct, specularProduct;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-uniform vec4 lightPosition;
-uniform float shininess;
-void main()
-{
-    vec3 pos = -(modelViewMatrix * vPosition).xyz;
-    vec3 light = lightPosition.xyz;
-    vec3 L = normalize( light - pos );
-
-	
-    vec3 E = normalize( -pos );
-    vec3 H = normalize( L + E );
-    
-    vec4 NN = vec4(vNormal,0);
-
-    // Transform vertex normal into eye coordinates
-       
-    vec3 N = normalize( (modelViewMatrix*NN).xyz);
-
-    // Compute terms in the illumination equation
-    vec4 ambient = ambientProduct;
-
-    float Kd = max( dot(L, N), 0.0 );
-    vec4  diffuse = Kd*diffuseProduct;
-
-    float Ks = pow( max(dot(N, H), 0.0), shininess );
-    vec4  specular = Ks * specularProduct;
-    
-    if( dot(L, N) < 0.0 ) {
-	specular = vec4(0.0, 0.0, 0.0, 1.0);
-    } 
-
-    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
-    fColor = ambient + diffuse + specular;
-    
-    fColor.a = 1.0;
-}
-</script>
-
-<script id="fragment-shader3" type="x-shader/x-fragment">
-precision mediump float;
-
-varying vec4 fColor;
-
-void main()
-{
-    gl_FragColor = fColor;
-	//gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); 
-}
-</script>
-
-<script>
-<!--
-var colorhex = "FF0000";
-function mouseOverColor(hex) {
-    document.getElementById("divpreview").style.visibility = "visible";
-    //  document.getElementById("divpreview").style.backgroundColor = hex;
-    document.body.style.cursor = "pointer";
-}
-
-function mouseOutMap() {
-}
-
-function clickColor(hex, seltop, selleft, html5) {
-    document.getElementById("divpreview").style.visibility = "visible";
-    document.getElementById("divpreview").style.backgroundColor = hex;
-    document.body.style.cursor = "pointer"; 
-
-  if ((seltop+199)>-1 && selleft>-1) {
-        document.getElementById("selectedhexagon").style.top=(seltop - 10) + "px";
-        document.getElementById("selectedhexagon").style.left=selleft + "px";
-        document.getElementById("selectedhexagon").style.visibility="visible";
-  } else {
-        document.getElementById("divpreview").style.backgroundColor = "#" + colorhex;
-        document.getElementById("selectedhexagon").style.visibility = "hidden";
-  }
-
-}
-</script>
 <script type="text/javascript" src="../Common/webgl-utils.js"></script>
 <script type="text/javascript" src="../Common/initShaders.js"></script>
 <script type="text/javascript" src="../Common/MV.js"></script>
@@ -339,7 +139,7 @@ function clickColor(hex, seltop, selleft, html5) {
 <script type="text/javascript" src="cube.class.js"></script>
 <script type="text/javascript" src="sphere.class.js"></script>
 <script type="text/javascript" src="cone.class.js"></script>
-<script type="text/javascript" src="hw3.js"></script>
+<script type="text/javascript" src="hw4.js"></script>
 </head>
 <body id="top">
 <header id="header">
@@ -352,9 +152,14 @@ advised by <a href="http://www.cs.umd.edu/~varshney/">Prof. Varshney</a>.</h1>
 <div id="main">
 <section id="one">
 <header class="major">
-	<h2>WebGL MOOC Assignment 3: Geometric CAD</h2>
+	<h2>WebGL MOOC Assignment 4: Adding Lighting</h2>
 </header>
-<p>This demo allows users to render some simple geometries using a basic control panel.</i> Feel free to play with it. 
+<p>This demo allows users to render some simple geometries using a basic control panel with lighting effects.</i>
+It fulfils the minimum requirement (5 pts), i.e., displays at least two of three types of objects with two moving light sources in orthogonal view. 
+In addition, users are allowed to turn on/off each light source with global ambient light. (1 pt) 
+There is distance attenuation for the lights. (2 pts) 
+Both objects' and lights' locations are interactive. (2 pts)
+Feel free to play with it. 
 </p>
 
 <div class="row">
@@ -364,20 +169,26 @@ Oops ... your browser doesn't support the HTML5 canvas element
 </canvas>
 </div>
 </div>
-
 <ul>
 
 
 <div class="row">
-<div class="col-md-4" id="color_label">Model List:</div>
-<div class="col-md-7">
-<ol id="selectable">
+<div class="col-md-2" id="model_label">Model List:</div>
+<div class="col-md-4">
+<ol id="modellist">
   <li class="ui-widget-content ui-selected">Cube 1</li>
   <li class="ui-widget-content">Sphere 1</li>
   <li class="ui-widget-content">Cone 1</li>
   <li class="ui-widget-content">Cube 2</li>
   <li class="ui-widget-content">Sphere 2</li>
   <li class="ui-widget-content">Cone 2</li>
+</ol>
+</div>
+<div class="col-md-2" id="light_label">Lights:</div>
+<div class="col-md-4">
+<ol id="lightlist">
+  <li class="ui-widget-content">Light 1</li>
+  <li class="ui-widget-content">Light 2</li>
 </ol>
 </div>
 </div>
@@ -393,7 +204,7 @@ Oops ... your browser doesn't support the HTML5 canvas element
 </div>
 </div>
 
-<div class="row hidden">
+<div class="row modelui hidden">
 <div class="col-md-4" id="color_label">Model Color:</div>
 <div class="col-md-7">
       <div style="margin:auto;width:236px;">
@@ -405,44 +216,83 @@ Oops ... your browser doesn't support the HTML5 canvas element
 <div class="col-md-1" id="color_value"><div id='divpreview'>&nbsp;</div></div>
 </div>
 
-<div class="row">
+<div class="row modelui">
 <div class="col-md-4" id="scale_label">Scale</div>
 <div class="col-md-7" style="margin-top: 10px;"><div id="scale"></div></div>
 <div class="col-md-1" id="scale_value">1</div>
 </div>
 
 
-<div class="row">
+<div class="row modelui">
 <div class="col-md-4" id="translationx_label">TranslationX</div>
 <div class="col-md-7" style="margin-top: 10px;"><div id="translationx"></div></div>
 <div class="col-md-1" id="translationx_value">0</div>
 </div>
 
-<div class="row">
+<div class="row modelui">
 <div class="col-md-4" id="translationy_label">TranslationY</div>
 <div class="col-md-7" style="margin-top: 10px;"><div id="translationy"></div></div>
 <div class="col-md-1" id="translationy_value">0</div>
 </div>
 
-<div class="row">
+<div class="row modelui">
 <div class="col-md-4" id="translationz_label">TranslationZ</div>
 <div class="col-md-7" style="margin-top: 10px;"><div id="translationz"></div></div>
 <div class="col-md-1" id="translationz_value">0</div>
 </div>
 
-<div class="row">
+<div class="row lightui">
+<div class="col-md-4" id="color_label">Is On:</div>
+<div class="col-md-7">
+<div id="lighton">
+<input type="radio" id="lighton1" name="lighton" value="0"><label for="lighton1">On</label>
+<input type="radio" id="lighton2" name="lighton" value="1" ><label for="lighton2">Off</label>
+</div>
+</div>
+</div>
+
+<div class="row lightui">
+<div class="col-md-4" id="color_label">Is Moving:</div>
+<div class="col-md-7">
+<div id="lightmoving">
+<input type="radio" id="lightmoving1" name="lightmoving" value="0"><label for="lightmoving1">Swinging along Z</label>
+<input type="radio" id="lightmoving2" name="lightmoving" value="1" ><label for="lightmoving2">Off</label>
+</div>
+</div>
+</div>
+
+<div class="row lightui">
+<div class="col-md-4" id="lightposx_label">LightPosX</div>
+<div class="col-md-7" style="margin-top: 10px;"><div id="lightposx"></div></div>
+<div class="col-md-1" id="lightposx_value">0</div>
+</div>
+
+<div class="row lightui">
+<div class="col-md-4" id="lightposy_label">LightPosY</div>
+<div class="col-md-7" style="margin-top: 10px;"><div id="lightposy"></div></div>
+<div class="col-md-1" id="lightposy_value">0</div>
+</div>
+
+<div class="row lightui">
+<div class="col-md-4" id="lightposz_label">LightPosZ</div>
+<div class="col-md-7" style="margin-top: 10px;"><div id="lightposz"></div></div>
+<div class="col-md-1" id="lightposz_value">0</div>
+</div>
+
+
+<div class="row modelui">
 <div class="col-md-4" id="rotationx_label">RotationX</div>
 <div class="col-md-7" style="margin-top: 10px;"><div id="rotationx"></div></div>
 <div class="col-md-1" id="rotationx_value">0</div>
 </div>
 
-<div class="row">
+<div class="row modelui">
 <div class="col-md-4" id="rotationy_label">RotationY</div>
 <div class="col-md-7" style="margin-top: 10px;"><div id="rotationy"></div></div>
 <div class="col-md-1" id="rotationy_value">0</div>
 </div>
 
-<div class="row">
+<div class="row modelui">
 <div class="col-md-4" id="rotationz_label">RotationZ</div>
 <div class="col-md-7" style="margin-top: 10px;"><div id="rotationz"></div></div>
 <div class="col-md-1" id="rotationz_value">0</div>
