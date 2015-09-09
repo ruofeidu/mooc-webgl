@@ -159,6 +159,7 @@ It fulfils the minimum requirement (5 pts), i.e., displays at least two of three
 In addition, users are allowed to turn on/off each light source with global ambient light. (1 pt) 
 There is distance attenuation for the lights. (2 pts) 
 Both objects' and lights' locations are interactive. (2 pts)
+Please zoom out the page a little bit for better view experience.
 Feel free to play with it. 
 </p>
 

@@ -26,18 +26,22 @@ function reload() {
 	lightings.push(new Lighting()); 
 	lightings.push(new Lighting()); 
 	lightings[1].position = vec4( -1.0, -1.0, 1.0, 0.0 );
-	
+	var z = 180.0/3.1415926; 
 	models = []; 
 	models.push(new Cube()); 
 	models[0].translation = [-1.0, 1.0, 0.0];
-	models[0].rotation = [0.122, 0.296, 0.576];
+	models[0].rotation = [0.122*z , 0.296*z, 0.576*z];
+	models[0].scale = [0.7, 0.7, 0.7];
 	models.push(new Sphere()); 
 	models[1].scale = [0.5, 0.5, 0.5];
+	models[1].translation = [0.0, 0.0, 1.4];
 	models.push(new Cone()); 
-	models[2].translation = [-1.0, -1.0, 0.0];
-	models[2].rotation = [90.0, 90.0, 0.0];
+	models[2].translation = [-1.0, -1.0, -0.6];
+	models[2].rotation = [-0.2443460911111111*z, 0.61*z, 0.2618*z];
 	models.push(new Cube()); 
 	models[3].translation = [1.0, 1.0, 0.0];
+	models[3].rotation = [-0.122*z , 0.296*z, -0.576*z];
+	models[3].scale = [0.6, 0.6, 0.6];
 	models.push(new Sphere()); 
 	models[4].translation = [0.0, 1.0, 0.0];
 	models[4].scale = [0.2, 0.2, 0.2];
@@ -65,7 +69,7 @@ function render()
 $( document ).ready(function() {
 	console.log("Hi, I am Ruofei Du and I am glad to be your friend."); 
 	//console.log("Debugging"); 
-	window.parent.document.body.style.zoom = 0.75;
+	//window.parent.document.body.style.zoom = 0.75;
 	
 	$( "#scale" ).slider({
       range: false,
