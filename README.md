@@ -1,6 +1,6 @@
 # Interactive Computer Graphics with WebGL by Prof. Edward Angel on Coursera. Summer 2015.
 
-Interactive Computer Graphics with WebGL is taught by Prof. Edward Angel on Coursera Summer 2015. The required textbook is E. Angel and D. Shreiner, Interactive Computer Graphics, 7th Edition, Pearson Education. (I have the 6th version in PDF, feel free to request the password via email or comment). I use this page to maintain my progress. Most resources of the course can be accessed here.
+Interactive Computer Graphics with WebGL is taught by Prof. Edward Angel on Coursera Summer 2015. The required textbook is E. Angel and D. Shreiner, Interactive Computer Graphics, 7th Edition, Pearson Education. (I have the 6th version in PDF, feel free to request the password via email or comment). I use this page (http://course.duruofei.com/webgl) to maintain my progress. Most resources of the course can be accessed here. (http://www.cs.unm.edu/~angel/BOOK/INTERACTIVE_COMPUTER_GRAPHICS/SEVENTH_EDITION/)
 
 ## Homework
 ### Assignment 1 Tessellation and Twist
